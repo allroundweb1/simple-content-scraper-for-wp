@@ -1,0 +1,13 @@
+{
+    "config": {
+        "platform": {
+            "php": "8.0.0"
+        },
+        "autoloader-suffix": "Simco"
+    },
+    "require": {
+        "guzzlehttp/guzzle": "^7.4",
+        "woocommerce/action-scheduler": "^3.6",
+        "nette/caching": "^3.1"
+    }
+}

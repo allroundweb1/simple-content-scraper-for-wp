@@ -1,0 +1,88 @@
+/* Notices */
+.aw-notice-license-error {
+    background-color: #ff0000;
+    border-width: 0;
+    border: none !important;
+    color: #ffffff;
+    width: auto;
+    padding: 20px;
+    text-align: center;
+    font-size: 18px;
+    position: relative;
+    display: block;
+    font-size: 20px;
+    margin: 5px 0 10px 0 !important;
+}
+
+.aw-notice-license-notice {
+    background-color: #ffba61;
+    border-width: 0;
+    border: none !important;
+    color: #000000;
+    width: auto;
+    padding: 20px;
+    text-align: center;
+    font-size: 18px;
+    position: relative;
+    display: block;
+    font-size: 20px;
+    margin: 5px 0 10px 0 !important;
+}
+
+.aw-notice-license-error a,
+.aw-notice-license-notice a {
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    text-decoration: none;
+    margin-left: 10px;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.aw-notice-license-error a:hover,
+.aw-notice-license-notice a:hover {
+    background-color: #000000;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+@media screen and (max-width: 600px) {
+
+    .aw-notice-license-error,
+    .aw-notice-license-notice {
+        font-size: 16px;
+    }
+}
+
+/* Custom UIKit flex */
+/* Default to column layout */
+.uk-flex.aw-flex {
+    flex-direction: column;
+}
+
+/* Switch to row layout on screens wider than 960px */
+@media (min-width: 960px) {
+    .uk-flex.aw-flex {
+        flex-direction: row;
+    }
+}
+
+/* Custom UIKit message/alert */
+body .aw-alert-close {
+    position: absolute;
+    right: 10px;
+    top: calc(50% - 10px);
+    display: block;
+}
+
+body .uk-alert p {
+    margin: 0;
+    padding: 0;
+}
+
+/* Backend plugin menu image */
+body div #adminmenu .toplevel_page_simple-content-scraper .wp-menu-image img {
+    padding: 5px 0 0 0;
+}
