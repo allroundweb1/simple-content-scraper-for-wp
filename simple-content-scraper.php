@@ -2,14 +2,14 @@
 
 /**
  * Plugin Name:         Simple Content Scraper
- * Plugin URI:          https://rickvanoirschot.nl
+ * Plugin URI:          https://allroundweb.nl
  * Description:         Simple Content Scraper created by Rick.
  * Version:             1.0.0
  * Requires at least:   6.0.0
  * Tested up to:        6.2.2
  * Requires PHP:        8.0.0
- * Author:              Rick
- * Author URI:          https://rickvanoirschot.nl
+ * Author:              Rick van Oirschot
+ * Author URI:          https://allroundweb.nl
  * License:             GPL-2.0+
  * Text Domain:         simple-content-scraper
  * Domain Path:         /languages

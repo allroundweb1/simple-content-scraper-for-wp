@@ -1,6 +1,6 @@
 === Simple Content Scraper ===
-Link: https://rickvanoirschot.nl
-Tags: Rick, WordPress Plugin
+Link: https://allroundweb.nl
+Tags: Allround Web, WordPress Plugin
 Requires at least: 6.0.0
 Tested up to: 6.2.2
 Stable tag: 6.0.0
@@ -10,7 +10,7 @@ Simple Content Scraper
 
 == Description ==
 
-Simple Content Scraper created by Rick.
+Simple Content Scraper created by Rick @ Allround Web.
 
 == Installation ==
 
