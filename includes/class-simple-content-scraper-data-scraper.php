@@ -1,10 +1,8 @@
 <?php
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Utils;
-use Psr\Http\Message\StreamInterface;
-use Nette\Caching\Cache;
-use Nette\Caching\Storages\FileStorage;
+use GuzzleHttp\Client; // For the Guzzle HTTP client
+use Nette\Caching\Cache; // For the Nette caching (We can use this later on for a cache system)
+use Nette\Caching\Storages\FileStorage; // For the Nette caching (We can use this later on for a cache system)
 
 class Simple_Content_Scraper_Data_Scraper
 {
@@ -321,6 +319,9 @@ class Simple_Content_Scraper_Data_Scraper
         if (!empty($category) && !empty($category_seperator)) {
             // Explode the category by the category seperator
             $categories = explode($category_seperator, $category);
+        } elseif (!empty($category)) {
+            // Add the category to the categories array
+            $categories[] = $category;
         }
 
         // Create the scraped data array
@@ -403,6 +404,7 @@ class Simple_Content_Scraper_Data_Scraper
         if (!empty($categories)) {
             // Get the category ID's
             $category_ids = [];
+
             foreach ($categories as $category) {
                 // Check if the category is not empty
                 if (!empty($category)) {
@@ -415,12 +417,11 @@ class Simple_Content_Scraper_Data_Scraper
                         $category_ids[] = $category_id;
                     } else {
                         // Create the category
-                        $category_id = wp_insert_term($category, 'category');
+                        $new_cat = wp_insert_term($category, 'category');
 
-                        // Check if the category ID is not empty
-                        if (!empty($category_id)) {
-                            // Add the category ID to the category ID's array
-                            $category_ids[] = $category_id;
+                        // Check if the $new_cat is not empty and no WP error
+                        if (!empty($new_cat) && !is_wp_error($new_cat)) {
+                            $category_ids[] = $new_cat['term_id'];
                         }
                     }
                 }
@@ -486,7 +487,7 @@ class Simple_Content_Scraper_Data_Scraper
         }
 
         // Get the post with attachment id $already_imported_image->attachment_id
-        $attachment_post = get_post($already_imported_image->attachment_id);
+        $attachment_post = (!empty($already_imported_image) && !empty($already_imported_image->attachment_id)) ? get_post($already_imported_image->attachment_id) : null;
 
         // If the image is already imported, return the attachment ID
         if (!empty($already_imported_image) && !empty($already_imported_image->attachment_id) && !empty($attachment_post) && !empty($attachment_post->ID) && $attachment_post->ID == $already_imported_image->attachment_id) {

@@ -10,7 +10,7 @@ Simple Content Scraper
 
 == Description ==
 
-Simple Content Scraper created by Rick @ Allround Web.
+Simple Content Scraper for WordPress created by Allround Web.
 
 == Installation ==
 

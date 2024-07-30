@@ -1,8 +1,5 @@
 <?php
 
-use Nette\Caching\Cache;
-use Nette\Caching\Storages\FileStorage;
-
 class Simple_Content_Scraper_Admin_Settings
 {
     private $plugin_name;
@@ -29,16 +26,7 @@ class Simple_Content_Scraper_Admin_Settings
             $simco_menu_icon
         );
 
-        // add_submenu_page(
-        //     'simple-content-scraper',
-        //     'Connectie instellingen',
-        //     'Connectie instellingen',
-        //     'administrator',
-        //     'simple-content-scraper-connection-settings',
-        //     [$this, 'simple_content_scraper_plugin_connection_settings_page'],
-        //     1
-        // );
-
+        // Submenu to navigate to the action scheduler
         add_submenu_page(
             'simple-content-scraper',
             'Scheduled Actions',
@@ -49,27 +37,13 @@ class Simple_Content_Scraper_Admin_Settings
             99
         );
 
-        // License sub-menu item
-        // add_submenu_page(
-        //     'simple-content-scraper',
-        //     'License',
-        //     'License',
-        //     'administrator',
-        //     'simple-content-scraper-license',
-        //     [$this, 'simple_content_scraper_plugin_license_page']
-        // );
-
         // Register settings
         add_action('admin_init', [$this,  'register_simple_content_scraper_plugin_settings']);
     }
 
     public function register_simple_content_scraper_plugin_settings()
     {
-        register_setting('simple-content-scraper-plugin-settings-group', 'simco_license');
-
-        register_setting('simple-content-scraper-plugin-settings-group', 'simco_api_secret');
-        register_setting('simple-content-scraper-plugin-settings-group', 'simco_api_key');
-        register_setting('simple-content-scraper-plugin-settings-group', 'simco_api_customer_name');
+        // No settings (yet)
     }
 
     private function simple_content_scraper_post_type_dropdown()
@@ -126,6 +100,7 @@ class Simple_Content_Scraper_Admin_Settings
                 <div class="uk-container uk-container-expand">
                     <h3 class="uk-margin-remove-bottom">Content Scraper</h3>
                     <hr>
+                    <!-- URL's to scrape -->
                     <div class="uk-margin">
                         <label class="uk-form-label uk-margin-remove-bottom" for="simco_urls">URL's</label>
                         <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the URL's of the pages you want to scrape, each on a new line.</p>
@@ -167,7 +142,6 @@ class Simple_Content_Scraper_Admin_Settings
                     </div>
                     <!-- ID/CLASS of the category element of the URL with the option to define the separator -->
                     <div class="uk-margin">
-                        <!-- Container 80/20 -->
                         <div class="uk-grid uk-grid-small">
                             <div class="uk-width-1-1 uk-width-1-1@s uk-width-3-5@m">
                                 <label class="uk-form-label" for="simco_category_id">Category ID/class</label>
@@ -208,72 +182,6 @@ class Simple_Content_Scraper_Admin_Settings
             </div>
         </div>
     <?php
-    }
-
-    public function simple_content_scraper_plugin_license_page()
-    {
-    ?>
-        <div class="uk-section uk-section-muted">
-            <div class="uk-container uk-container-expand">
-                <h3>SIMCO_PLUGIN_BASE WP Koppeling</h3>
-                <div class="uk-grid-match uk-child-width-1-3@m" uk-grid>
-                    <form method="post" action="options.php" class="uk-form-horizontal">
-                        <?php settings_fields('simple-content-scraper-plugin-settings-group'); ?>
-                        <?php do_settings_sections('simple-content-scraper-plugin-settings-group'); ?>
-
-                        <label class="uk-form-label" for="simco_license">Plugin Licence</label>
-
-                        <div class="uk-inline uk-margin-small-bottom">
-                            <span class="uk-form-icon uk-form-icon-flip" uk-icon="icon: lock"></span>
-                            <input class="uk-input" type="text" name="simco_license" value="<?php echo esc_attr(get_option('simco_license')); ?>" />
-                        </div>
-
-                        <input type="submit" name="submit" id="submit" class="uk-button uk-button-primary" value="Submit">
-                    </form>
-                </div>
-            </div>
-        </div>
-    <?php
-    }
-
-    public function simple_content_scraper_plugin_connection_settings_page()
-    {
-    ?>
-        <div class="uk-section uk-section-muted">
-            <div class="uk-container uk-container-expand">
-                <h3>SIMCO API Instellingen</h3>
-                <div class="uk-grid-match uk-child-width-1-3@m" uk-grid>
-                    <form method="post" action="options.php" class="uk-form-horizontal">
-                        <?php settings_fields('simple-content-scraper-plugin-settings-group'); ?>
-                        <?php do_settings_sections('simple-content-scraper-plugin-settings-group'); ?>
-
-                        <label class="uk-form-label" for="simco_api_secret">SIMCO API Secret</label>
-
-                        <div class="uk-inline uk-margin-small-bottom">
-                            <span class="uk-form-icon uk-form-icon-flip" uk-icon="icon: lock"></span>
-                            <input class="uk-input" type="text" name="simco_api_secret" value="<?php echo esc_attr(get_option('simco_api_secret')); ?>" />
-                        </div>
-
-                        <label class="uk-form-label" for="simco_api_key">SIMCO API Key</label>
-
-                        <div class="uk-inline uk-margin-small-bottom">
-                            <span class="uk-form-icon uk-form-icon-flip" uk-icon="icon: lock"></span>
-                            <input class="uk-input" type="text" name="simco_api_key" value="<?php echo esc_attr(get_option('simco_api_key')); ?>" />
-                        </div>
-
-                        <label class="uk-form-label" for="simco_api_customer_name">SIMCO Customer Name</label>
-
-                        <div class="uk-inline uk-margin-small-bottom">
-                            <span class="uk-form-icon uk-form-icon-flip" uk-icon="icon: lock"></span>
-                            <input class="uk-input" type="text" name="simco_api_customer_name" value="<?php echo esc_attr(get_option('simco_api_customer_name')); ?>" />
-                        </div>
-
-                        <input type="submit" name="submit" id="submit" class="uk-button uk-button-primary" value="Opslaan">
-                    </form>
-                </div>
-            </div>
-        </div>
-<?php
     }
 
     public function simple_content_scraper_redirect_to_action_scheduler_content()
