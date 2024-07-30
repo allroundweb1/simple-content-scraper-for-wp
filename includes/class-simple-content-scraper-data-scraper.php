@@ -507,7 +507,9 @@ class Simple_Content_Scraper_Data_Scraper
 
         if (is_wp_error($file_array['tmp_name'])) {
             // Trow an error
-            throw new Exception('Error: (simco_upload_image) ' . $file_array['tmp_name']->get_error_message());
+            // throw new Exception('Error: (simco_upload_image) ' . $file_array['tmp_name']->get_error_message());
+            @unlink($file_array['tmp_name']);
+            return '';
         }
 
         $attachment_id = media_handle_sideload($file_array, $post_id, $desc);
@@ -516,7 +518,8 @@ class Simple_Content_Scraper_Data_Scraper
             @unlink($file_array['tmp_name']);
 
             // Trow an error
-            throw new Exception('Error: (simco_upload_image) ' . $attachment_id->get_error_message());
+            // throw new Exception('Error: (simco_upload_image) ' . $attachment_id->get_error_message());
+            return '';
         }
 
         if (wp_attachment_is_image($attachment_id)) {
