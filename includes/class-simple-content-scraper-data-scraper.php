@@ -284,6 +284,15 @@ class Simple_Content_Scraper_Data_Scraper
 
                     // Check if the image URL is not empty
                     if (!empty($image_url)) {
+                        // Check if the URL contains http:// or https:// other wise get the base URL from the original page URL and then add the image URL
+                        if (strpos($image_url, 'http://') === false && strpos($image_url, 'https://') === false) {
+                            // Get the base URL from the original page URL
+                            $base_url = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST);
+
+                            // Add the image URL to the base URL
+                            $image_url = $base_url . $image_url;
+                        }
+
                         // Get the image ID
                         $image_id = $this->simco_upload_image($image_url, null, 'Afbeelding', 'Afbeelding', 'image_');
 
