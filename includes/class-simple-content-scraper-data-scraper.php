@@ -281,6 +281,7 @@ class Simple_Content_Scraper_Data_Scraper
                 foreach ($images as $image) {
                     // Get the image URL
                     $image_url = $image->getAttribute('src');
+                    $original_image_url = $image_url;
 
                     // Check if the image URL is not empty
                     if (!empty($image_url)) {
@@ -299,7 +300,7 @@ class Simple_Content_Scraper_Data_Scraper
                         // Check if the image ID is not empty
                         if (!empty($image_id)) {
                             // Replace the image URL with the image ID
-                            $content = str_replace($image_url, wp_get_attachment_url($image_id), $content);
+                            $content = str_replace($original_image_url, wp_get_attachment_url($image_id), $content);
                         }
                     }
                 }
