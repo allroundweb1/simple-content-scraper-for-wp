@@ -4,7 +4,7 @@
  * Plugin Name:         Simple Content Scraper
  * Plugin URI:          https://allroundweb.nl
  * Description:         Simple Content Scraper for WordPress created by Allround Web.
- * Version:             1.0.2
+ * Version:             1.0.3
  * Requires at least:   6.0.0
  * Tested up to:        6.2.2
  * Requires PHP:        8.0.0
@@ -25,7 +25,7 @@ if (!defined('WPINC')) {
 /**
  * Current plugin version
  */
-define('SIMCO_VERSION', '1.0.2');
+define('SIMCO_VERSION', '1.0.3');
 
 /**
  * Plugin root file
