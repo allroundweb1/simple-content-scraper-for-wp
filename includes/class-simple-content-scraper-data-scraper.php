@@ -56,24 +56,30 @@ class Simple_Content_Scraper_Data_Scraper
         $date_element_id = !empty($args['date_element_id']) ? $args['date_element_id'] : '';
         $category_element_id = !empty($args['category_element_id']) ? $args['category_element_id'] : '';
         $category_seperator = !empty($args['category_seperator']) ? $args['category_seperator'] : '';
+        $import_type = !empty($args['import_type']) ? $args['import_type'] : 'post';
         $post_type = !empty($args['post_type']) ? $args['post_type'] : 'post';
+        $taxonomy = !empty($args['taxonomy']) ? $args['taxonomy'] : '';
+        $enable_slug_matching = !empty($args['enable_slug_matching']) ? $args['enable_slug_matching'] : false;
+        $url_slug_part = !empty($args['url_slug_part']) ? $args['url_slug_part'] : 'last';
 
         // Loop through the URL's
         foreach ($args['urls'] as $url) {
             // Plan the single url action
-            as_enqueue_async_action('simco_process_single_url', [
-                'process_data' => [
-                    'post_id'                   => null,
-                    'url'                       => $url,
-                    'title_element_id'          => $title_element_id,
-                    'content_element_id'        => $content_element_id,
-                    'image_element_id'          => $image_element_id,
-                    'date_element_id'           => $date_element_id,
-                    'category_element_id'       => $category_element_id,
-                    'category_seperator'        => $category_seperator,
-                    'post_type'                 => $post_type
-                ]
-            ]);
+            as_enqueue_async_action('simco_process_single_url', [[
+                'post_id'                   => null,
+                'url'                       => $url,
+                'title_element_id'          => $title_element_id,
+                'content_element_id'        => $content_element_id,
+                'image_element_id'          => $image_element_id,
+                'date_element_id'           => $date_element_id,
+                'category_element_id'       => $category_element_id,
+                'category_seperator'        => $category_seperator,
+                'import_type'               => $import_type,
+                'post_type'                 => $post_type,
+                'taxonomy'                  => $taxonomy,
+                'enable_slug_matching'      => $enable_slug_matching,
+                'url_slug_part'             => $url_slug_part
+            ]]);
         }
     }
 
@@ -117,14 +123,24 @@ class Simple_Content_Scraper_Data_Scraper
         // Get the category seperator
         $category_seperator = !empty($args['category_seperator']) ? $args['category_seperator'] : '';
 
-        // Get the post type
+        // Get import type and related fields
+        $import_type = !empty($args['import_type']) ? $args['import_type'] : 'post';
         $post_type = !empty($args['post_type']) ? $args['post_type'] : 'post';
+        $taxonomy = !empty($args['taxonomy']) ? $args['taxonomy'] : '';
+        $enable_slug_matching = !empty($args['enable_slug_matching']) ? $args['enable_slug_matching'] : false;
+        $url_slug_part = !empty($args['url_slug_part']) ? $args['url_slug_part'] : 'last';
 
         // Scrape the URL and get the data from this URL based on the Element ID's
         $scraped_data = $this->simco_scrape_url($url, $title_element_id, $content_element_id, $image_element_id, $date_element_id, $category_element_id, $category_seperator);
 
-        // Create or update the post with the scraped data
-        $this->simco_create_or_update_post($post_id, $scraped_data, $post_type);
+        // Handle based on import type
+        if ($import_type === 'taxonomy') {
+            // Handle taxonomy import
+            $this->simco_create_or_update_taxonomy($url, $scraped_data, $taxonomy, $enable_slug_matching, $url_slug_part);
+        } else {
+            // Handle post import (existing functionality)
+            $this->simco_create_or_update_post($post_id, $scraped_data, $post_type);
+        }
     }
 
     /**
@@ -165,7 +181,7 @@ class Simple_Content_Scraper_Data_Scraper
         // Create a new DOMXPath
         $xpath = new DOMXPath($dom);
 
-        // Build the xpath query with the Class or ID in $title_element_id
+        // Build the xpath query with the Class, ID, or HTML tag in $title_element_id
         if (!empty($title_element_id) && strpos($title_element_id, '.') !== false) {
             // Strip . from the beginning
             $title_element_id = ltrim($title_element_id, '.');
@@ -176,6 +192,9 @@ class Simple_Content_Scraper_Data_Scraper
             $title_element_id = ltrim($title_element_id, '#');
 
             $title_element_xpath_query = "//*[@id='$title_element_id']";
+        } elseif (!empty($title_element_id) && preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $title_element_id)) {
+            // HTML tag (like h1, h2, p, div, etc.)
+            $title_element_xpath_query = "//$title_element_id";
         } elseif (!empty($title_element_id)) {
             $title_element_xpath_query = "//*[contains(@class, '$title_element_id')] | //*[@id='$title_element_id']";
         }
@@ -183,7 +202,7 @@ class Simple_Content_Scraper_Data_Scraper
         // Get the title element
         $title_element = $xpath->query($title_element_xpath_query);
 
-        // Build the xpath query with the Class or ID in $content_element_id
+        // Build the xpath query with the Class, ID, or HTML tag in $content_element_id
         if (!empty($content_element_id) && strpos($content_element_id, '.') !== false) {
             // Strip . from the beginning
             $content_element_id = ltrim($content_element_id, '.');
@@ -194,6 +213,9 @@ class Simple_Content_Scraper_Data_Scraper
             $content_element_id = ltrim($content_element_id, '#');
 
             $content_element_xpath_query = "//*[@id='$content_element_id']";
+        } elseif (!empty($content_element_id) && preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $content_element_id)) {
+            // HTML tag (like div, p, article, section, etc.)
+            $content_element_xpath_query = "//$content_element_id";
         } elseif (!empty($content_element_id)) {
             $content_element_xpath_query = "//*[contains(@class, '$content_element_id')] | //*[@id='$content_element_id']";
         }
@@ -201,7 +223,8 @@ class Simple_Content_Scraper_Data_Scraper
         // Get the content element
         $content_element = $xpath->query($content_element_xpath_query);
 
-        // Build the xpath query with the Class or ID in $image_element_id
+        // Build the xpath query with the Class, ID, or HTML tag in $image_element_id
+        $image_element_xpath_query = '';
         if (!empty($image_element_id) && strpos($image_element_id, '.') !== false) {
             // Strip . from the beginning
             $image_element_id = ltrim($image_element_id, '.');
@@ -212,14 +235,18 @@ class Simple_Content_Scraper_Data_Scraper
             $image_element_id = ltrim($image_element_id, '#');
 
             $image_element_xpath_query = "//*[@id='$image_element_id']";
+        } elseif (!empty($image_element_id) && preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $image_element_id)) {
+            // HTML tag (like img, figure, picture, etc.)
+            $image_element_xpath_query = "//$image_element_id";
         } elseif (!empty($image_element_id)) {
             $image_element_xpath_query = "//*[contains(@class, '$image_element_id')] | //*[@id='$image_element_id']";
         }
 
         // Get the image element
-        $image_element = $xpath->query($image_element_xpath_query);
+        $image_element = !empty($image_element_xpath_query) ? $xpath->query($image_element_xpath_query) : null;
 
-        // Build the xpath query with the Class or ID in $date_element_id
+        // Build the xpath query with the Class, ID, or HTML tag in $date_element_id
+        $date_element_xpath_query = '';
         if (!empty($date_element_id) && strpos($date_element_id, '.') !== false) {
             // Strip . from the beginning
             $date_element_id = ltrim($date_element_id, '.');
@@ -230,14 +257,18 @@ class Simple_Content_Scraper_Data_Scraper
             $date_element_id = ltrim($date_element_id, '#');
 
             $date_element_xpath_query = "//*[@id='$date_element_id']";
+        } elseif (!empty($date_element_id) && preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $date_element_id)) {
+            // HTML tag (like time, span, p, etc.)
+            $date_element_xpath_query = "//$date_element_id";
         } elseif (!empty($date_element_id)) {
             $date_element_xpath_query = "//*[contains(@class, '$date_element_id')] | //*[@id='$date_element_id']";
         }
 
         // Get the date element
-        $date_element = $xpath->query($date_element_xpath_query);
+        $date_element = !empty($date_element_xpath_query) ? $xpath->query($date_element_xpath_query) : null;
 
-        // Build the xpath query with the Class or ID in $category_element_id
+        // Build the xpath query with the Class, ID, or HTML tag in $category_element_id
+        $category_element_xpath_query = '';
         if (!empty($category_element_id) && strpos($category_element_id, '.') !== false) {
             // Strip . from the beginning
             $category_element_id = ltrim($category_element_id, '.');
@@ -248,12 +279,15 @@ class Simple_Content_Scraper_Data_Scraper
             $category_element_id = ltrim($category_element_id, '#');
 
             $category_element_xpath_query = "//*[@id='$category_element_id']";
+        } elseif (!empty($category_element_id) && preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $category_element_id)) {
+            // HTML tag (like span, p, div, etc.)
+            $category_element_xpath_query = "//$category_element_id";
         } elseif (!empty($category_element_id)) {
             $category_element_xpath_query = "//*[contains(@class, '$category_element_id')] | //*[@id='$category_element_id']";
         }
 
         // Get the category element
-        $category_element = $xpath->query($category_element_xpath_query);
+        $category_element = !empty($category_element_xpath_query) ? $xpath->query($category_element_xpath_query) : null;
 
         // Check if the title element is not empty
         if (!empty($title_element) && !empty($title_element->item(0))) {
@@ -308,19 +342,22 @@ class Simple_Content_Scraper_Data_Scraper
         }
 
         // Check if the image element is not empty
-        if (!empty($image_element) && !empty($image_element->item(0))) {
+        if (!empty($image_element) && $image_element->length > 0 && !empty($image_element->item(0))) {
             // Get the image URL
             $image = $image_element->item(0)->getAttribute('src');
         }
 
         // Check if the date element is not empty
-        if (!empty($date_element) && !empty($date_element->item(0))) {
+        if (!empty($date_element) && $date_element->length > 0 && !empty($date_element->item(0))) {
             // Get the date
             $date = $date_element->item(0)->nodeValue;
+        } else {
+            // Use today's date if no date element found
+            $date = date('d-m-Y');
         }
 
         // Check if the category element is not empty
-        if (!empty($category_element) && !empty($category_element->item(0))) {
+        if (!empty($category_element) && $category_element->length > 0 && !empty($category_element->item(0))) {
             // Get the category
             $category = $category_element->item(0)->nodeValue;
         }
@@ -557,6 +594,151 @@ class Simple_Content_Scraper_Data_Scraper
         ));
 
         return $attachment_id;
+    }
+
+    /**
+     * Extract URL slug part for taxonomy matching
+     */
+    private function simco_extract_url_slug_part($url, $part_position = 'last')
+    {
+        // Parse the URL to get the path
+        $parsed_url = parse_url($url);
+        $path = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        
+        // Remove leading and trailing slashes, then split by slashes
+        $path = trim($path, '/');
+        $parts = explode('/', $path);
+        
+        // Filter out empty parts
+        $parts = array_filter($parts, function($part) {
+            return !empty($part);
+        });
+        
+        // Re-index array after filtering
+        $parts = array_values($parts);
+        
+        if (empty($parts)) {
+            return '';
+        }
+        
+        // Get the requested part
+        switch ($part_position) {
+            case 'last':
+                return end($parts);
+            case 'second_last':
+                return count($parts) >= 2 ? $parts[count($parts) - 2] : '';
+            case 'third_last':
+                return count($parts) >= 3 ? $parts[count($parts) - 3] : '';
+            default:
+                return end($parts);
+        }
+    }
+
+    /**
+     * Find existing taxonomy by slug match
+     */
+    private function simco_find_taxonomy_by_slug($taxonomy, $slug_part)
+    {
+        if (empty($slug_part) || empty($taxonomy)) {
+            return null;
+        }
+
+        // Get all terms for the taxonomy
+        $terms = get_terms([
+            'taxonomy' => $taxonomy,
+            'hide_empty' => false,
+            'number' => 0 // Get all terms
+        ]);
+
+        if (is_wp_error($terms)) {
+            return null;
+        }
+
+        // Look for exact slug match or partial slug match
+        foreach ($terms as $term) {
+            // Check if the slug contains the slug part or if the slug part contains the term slug
+            if (strpos($term->slug, $slug_part) !== false || strpos($slug_part, $term->slug) !== false) {
+                return $term;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Create or update taxonomy
+     */
+    private function simco_create_or_update_taxonomy($url, $scraped_data, $taxonomy, $enable_slug_matching = false, $url_slug_part = 'last')
+    {
+        // Check if scraped_data is valid
+        if (empty($scraped_data)) {
+            throw new Exception('Error: (simco_create_or_update_taxonomy) No scraped_data found.');
+        }
+
+        // Extract data from scraped_data
+        $title = !empty($scraped_data['title']) ? $scraped_data['title'] : '';
+        $content = !empty($scraped_data['content']) ? $scraped_data['content'] : '';
+        $image = !empty($scraped_data['image']) ? $scraped_data['image'] : '';
+        
+        $term_id = null;
+
+        // Handle slug matching if enabled
+        if ($enable_slug_matching) {
+            $extracted_slug = $this->simco_extract_url_slug_part($url, $url_slug_part);
+            
+            if (!empty($extracted_slug)) {
+                $existing_term = $this->simco_find_taxonomy_by_slug($taxonomy, $extracted_slug);
+                if ($existing_term) {
+                    $term_id = $existing_term->term_id;
+                }
+            }
+        }
+
+        // Create or update term
+        if ($term_id) {
+            // Update existing term
+            $result = wp_update_term($term_id, $taxonomy, [
+                'name' => $title,
+                'description' => wp_strip_all_tags($content)
+            ]);
+        } else {
+            // Create new term
+            $slug = $enable_slug_matching ? $this->simco_extract_url_slug_part($url, $url_slug_part) : '';
+            $term_args = [
+                'name' => $title,
+                'description' => wp_strip_all_tags($content)
+            ];
+            
+            if (!empty($slug)) {
+                $term_args['slug'] = sanitize_title($slug);
+            }
+
+            $result = wp_insert_term($title, $taxonomy, $term_args);
+
+            if (!is_wp_error($result)) {
+                $term_id = $result['term_id'];
+            }
+        }
+
+        // Handle image as term meta if term was created/updated successfully
+        if ($term_id && !empty($image)) {
+            // Upload the image first
+            $image_id = $this->simco_upload_image($image, null, 'Taxonomy Image', 'Taxonomy Image', 'taxonomy_image_');
+            
+            if (!empty($image_id)) {
+                // Save image as term meta (many themes and plugins look for 'thumbnail_id')
+                update_term_meta($term_id, 'thumbnail_id', $image_id);
+                // Also save with a more generic meta key
+                update_term_meta($term_id, 'simco_image_id', $image_id);
+            }
+        }
+
+        // Check if the term was created/updated successfully
+        if (is_wp_error($result)) {
+            throw new Exception('Error: (simco_create_or_update_taxonomy) ' . $result->get_error_message());
+        }
+
+        return $term_id;
     }
 
     /**

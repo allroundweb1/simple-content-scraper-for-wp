@@ -92,6 +92,49 @@ class Simple_Content_Scraper_Admin_Settings
         return $dropdown;
     }
 
+    private function simple_content_scraper_taxonomy_dropdown()
+    {
+        // Get all public taxonomies
+        $taxonomies = get_taxonomies(['public' => true], 'objects');
+        
+        // Filter out some built-in taxonomies that are not typically used for content import
+        $taxonomies_to_exclude = ['nav_menu', 'link_category', 'post_format'];
+        
+        // Create the dropdown
+        $dropdown = '<select name="simco_taxonomy" id="simco_taxonomy" class="uk-select">';
+        $dropdown .= '<option value="">Select taxonomy...</option>';
+        
+        foreach ($taxonomies as $taxonomy) {
+            if (!in_array($taxonomy->name, $taxonomies_to_exclude)) {
+                $dropdown .= '<option value="' . $taxonomy->name . '">' . $taxonomy->label . ' (' . $taxonomy->name . ')</option>';
+            }
+        }
+        $dropdown .= '</select>';
+
+        return $dropdown;
+    }
+
+    private function simple_content_scraper_import_type_dropdown()
+    {
+        $dropdown = '<select name="simco_import_type" id="simco_import_type" class="uk-select">';
+        $dropdown .= '<option value="post">Post</option>';
+        $dropdown .= '<option value="taxonomy">Taxonomy</option>';
+        $dropdown .= '</select>';
+
+        return $dropdown;
+    }
+
+    private function simple_content_scraper_url_slug_part_dropdown()
+    {
+        $dropdown = '<select name="simco_url_slug_part" id="simco_url_slug_part" class="uk-select">';
+        $dropdown .= '<option value="last">Last part</option>';
+        $dropdown .= '<option value="second_last">Second to last part</option>';
+        $dropdown .= '<option value="third_last">Third to last part</option>';
+        $dropdown .= '</select>';
+
+        return $dropdown;
+    }
+
     public function simple_content_scraper_plugin_main_page()
     {
 ?>
@@ -108,46 +151,46 @@ class Simple_Content_Scraper_Admin_Settings
                             <textarea class="uk-textarea" name="simco_urls" id="simco_urls" rows="10"></textarea>
                         </div>
                     </div>
-                    <!-- ID/CLASS of the Title element of the URL -->
+                    <!-- ID/CLASS/TAG of the Title element of the URL -->
                     <div class="uk-margin">
-                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_title_id">Title ID/class</label>
-                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID or class name of the page title to be scraped, using .class-name for class names or #id-name for IDs.</p>
+                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_title_id">Title ID/class/tag</label>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID, class name, or HTML tag to scrape the page title. Use .class-name for classes, #id-name for IDs, or just the tag name like h1, h2, etc.</p>
                         <div class="uk-form-controls">
-                            <input class="uk-input" type="text" name="simco_title_id" id="simco_title_id" value="">
+                            <input class="uk-input" type="text" name="simco_title_id" id="simco_title_id" value="" placeholder="e.g. h1, .title, #main-title">
                         </div>
                     </div>
-                    <!-- ID/CLASS of the Content element of the URL -->
+                    <!-- ID/CLASS/TAG of the Content element of the URL -->
                     <div class="uk-margin">
-                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_content_id">Content ID/class</label>
-                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID or class name of the page content to be scraped, using .class-name for class names or #id-name for IDs.</p>
+                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_content_id">Content ID/class/tag</label>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID, class name, or HTML tag to scrape the page content. Use .class-name for classes, #id-name for IDs, or just the tag name like article, section, div, etc.</p>
                         <div class="uk-form-controls">
-                            <input class="uk-input" type="text" name="simco_content_id" id="simco_content_id" value="">
+                            <input class="uk-input" type="text" name="simco_content_id" id="simco_content_id" value="" placeholder="e.g. article, .content, #main-content">
                         </div>
                     </div>
-                    <!-- ID/CLASS of the Image element of the URL -->
+                    <!-- ID/CLASS/TAG of the Image element of the URL -->
                     <div class="uk-margin">
-                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_image_id">Image ID/class</label>
-                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID or class name of the page image to be scraped, using .class-name for class names or #id-name for IDs.</p>
+                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_image_id">Image ID/class/tag</label>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID, class name, or HTML tag to scrape the page image. Use .class-name for classes, #id-name for IDs, or just the tag name like img, figure, picture, etc.</p>
                         <div class="uk-form-controls">
-                            <input class="uk-input" type="text" name="simco_image_id" id="simco_image_id" value="">
+                            <input class="uk-input" type="text" name="simco_image_id" id="simco_image_id" value="" placeholder="e.g. img, .hero-image, #featured-image">
                         </div>
                     </div>
-                    <!-- ID/CLASS of the Date element of the URL -->
+                    <!-- ID/CLASS/TAG of the Date element of the URL -->
                     <div class="uk-margin">
-                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_date_id">Date ID/class</label>
-                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID or class name of the page date to be scraped, using .class-name for class names or #id-name for IDs.</p>
+                        <label class="uk-form-label uk-margin-remove-bottom" for="simco_date_id">Date ID/class/tag</label>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID, class name, or HTML tag to scrape the page date. Use .class-name for classes, #id-name for IDs, or just the tag name like time, span, p, etc.</p>
                         <div class="uk-form-controls">
-                            <input class="uk-input" type="text" name="simco_date_id" id="simco_date_id" value="">
+                            <input class="uk-input" type="text" name="simco_date_id" id="simco_date_id" value="" placeholder="e.g. time, .date, #publish-date">
                         </div>
                     </div>
                     <!-- ID/CLASS of the category element of the URL with the option to define the separator -->
                     <div class="uk-margin">
                         <div class="uk-grid uk-grid-small">
                             <div class="uk-width-1-1 uk-width-1-1@s uk-width-3-5@m">
-                                <label class="uk-form-label" for="simco_category_id">Category ID/class</label>
-                                <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID or class name of the page category to be scraped, using .class-name for class names or #id-name for IDs.</p>
+                                <label class="uk-form-label" for="simco_category_id">Category ID/class/tag</label>
+                                <p class="uk-margin-remove-top uk-margin-remove-bottom">Fill in the ID, class name, or HTML tag to scrape the page categories. Use .class-name for classes, #id-name for IDs, or just the tag name like span, nav, ul, etc.</p>
                                 <div class="uk-form-controls">
-                                    <input class="uk-input" type="text" name="simco_category_id" id="simco_category_id" value="">
+                                    <input class="uk-input" type="text" name="simco_category_id" id="simco_category_id" value="" placeholder="e.g. nav, .categories, #tags">
                                 </div>
                             </div>
                             <div class="uk-width-1-1 uk-width-1-1@s uk-width-2-5@m">
@@ -159,12 +202,46 @@ class Simple_Content_Scraper_Admin_Settings
                             </div>
                         </div>
                     </div>
-                    <!-- Select dropdown with all post types -->
+                    <!-- Import type selection -->
                     <div class="uk-margin">
+                        <label class="uk-form-label" for="simco_import_type">Import Type</label>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Choose whether to import as posts or taxonomies.</p>
+                        <div class="uk-form-controls">
+                            <?php echo $this->simple_content_scraper_import_type_dropdown(); ?>
+                        </div>
+                    </div>
+                    <!-- Select dropdown with all post types -->
+                    <div class="uk-margin" id="simco_post_type_section">
                         <label class="uk-form-label" for="simco_post_type">Post Type</label>
                         <p class="uk-margin-remove-top uk-margin-remove-bottom">Select the post type where the scraped content should be saved.</p>
                         <div class="uk-form-controls">
                             <?php echo $this->simple_content_scraper_post_type_dropdown(); ?>
+                        </div>
+                    </div>
+                    <!-- Select dropdown with all taxonomies (hidden by default) -->
+                    <div class="uk-margin" id="simco_taxonomy_section" style="display: none;">
+                        <label class="uk-form-label" for="simco_taxonomy">Taxonomy</label>
+                        <p class="uk-margin-remove-top uk-margin-remove-bottom">Select the taxonomy where the scraped content should be saved.</p>
+                        <div class="uk-form-controls">
+                            <?php echo $this->simple_content_scraper_taxonomy_dropdown(); ?>
+                        </div>
+                    </div>
+                    <!-- URL slug matching settings (hidden by default) -->
+                    <div class="uk-margin" id="simco_slug_matching_section" style="display: none;">
+                        <div class="uk-grid uk-grid-small">
+                            <div class="uk-width-1-1 uk-width-1-2@s">
+                                <label class="uk-form-label" for="simco_enable_slug_matching">
+                                    <input class="uk-checkbox" type="checkbox" name="simco_enable_slug_matching" id="simco_enable_slug_matching" value="1"> Enable slug matching
+                                </label>
+                                <p class="uk-margin-remove-top uk-margin-remove-bottom">Match existing taxonomies by URL slug part.</p>
+                            </div>
+                            <div class="uk-width-1-1 uk-width-1-2@s" id="simco_url_slug_part_section" style="display: none;">
+                                <label class="uk-form-label" for="simco_url_slug_part">URL Slug Part</label>
+                                <p class="uk-margin-remove-top uk-margin-remove-bottom">Choose which part of the URL to use for matching.</p>
+                                <div class="uk-form-controls">
+                                    <?php echo $this->simple_content_scraper_url_slug_part_dropdown(); ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <p uk-margin class="uk-flex aw-flex uk-flex-left uk-flex-middle">
