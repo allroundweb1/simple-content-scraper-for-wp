@@ -20,6 +20,11 @@ class Simple_Content_Scraper_Data_Scraper
      */
     public function simco_process_urls($args = [])
     {
+        // Security check: Only allow execution in admin context or via Action Scheduler
+        if (!is_admin() && !wp_doing_cron() && !defined('DOING_AJAX')) {
+            throw new Exception('Error: (simco_process_urls) Unauthorized access attempt.');
+        }
+        
         if (empty($args) || !is_array($args)) {
             // Throw an error
             throw new Exception('Error: (simco_process_urls) No $args found.');
@@ -88,6 +93,11 @@ class Simple_Content_Scraper_Data_Scraper
      */
     public function simco_process_single_url($args = [])
     {
+        // Security check: Only allow execution in admin context or via Action Scheduler
+        if (!is_admin() && !wp_doing_cron() && !defined('DOING_AJAX')) {
+            throw new Exception('Error: (simco_process_single_url) Unauthorized access attempt.');
+        }
+        
         if (empty($args) || !is_array($args)) {
             // Throw an error
             throw new Exception('Error: (simco_process_single_url) No $args found.');
@@ -720,7 +730,15 @@ class Simple_Content_Scraper_Data_Scraper
             }
         }
 
-        // Handle image as term meta if term was created/updated successfully
+        // Save HTML content with processed images in custom meta field
+        if ($term_id && !empty($content)) {
+            // Process content to replace image URLs with WordPress media URLs
+            $processed_content = $this->simco_process_content_images($content, $term_id);
+            // Store the full HTML content in custom meta field
+            update_term_meta($term_id, 'description_with_html', wp_kses_post($processed_content));
+        }
+
+        // Handle featured image as term meta if term was created/updated successfully
         if ($term_id && !empty($image)) {
             // Upload the image first
             $image_id = $this->simco_upload_image($image, null, 'Taxonomy Image', 'Taxonomy Image', 'taxonomy_image_');
@@ -789,5 +807,140 @@ class Simple_Content_Scraper_Data_Scraper
         }
 
         return $result;
+    }
+
+    /**
+     * Process content to download images and replace URLs with WordPress media URLs
+     */
+    private function simco_process_content_images($content, $term_id = null)
+    {
+        // Find all img tags in the content
+        preg_match_all('/<img[^>]*src=[\'"]*([^\'"]*)[\'"][^>]*>/i', $content, $matches);
+        
+        if (empty($matches[0])) {
+            return $content; // No images found
+        }
+        
+        $processed_content = $content;
+        
+        // Process each image
+        for ($i = 0; $i < count($matches[0]); $i++) {
+            $img_tag = $matches[0][$i];
+            $img_src = $matches[1][$i];
+            
+            // Skip if URL is already local/WordPress URL
+            if (strpos($img_src, get_site_url()) !== false) {
+                continue;
+            }
+            
+            // Skip if it's a data URL or relative URL
+            if (strpos($img_src, 'data:') === 0 || strpos($img_src, '//') !== 0 && strpos($img_src, 'http') !== 0) {
+                continue;
+            }
+            
+            try {
+                // Download and upload the image
+                $attachment_id = $this->simco_upload_image($img_src, $term_id, 'Content Image', 'Content Image', 'content_image_');
+                
+                if (!empty($attachment_id)) {
+                    // Get the new WordPress URL
+                    $new_img_src = wp_get_attachment_url($attachment_id);
+                    
+                    if ($new_img_src) {
+                        // Replace the old URL with the new WordPress URL in the content
+                        $processed_content = str_replace($img_src, $new_img_src, $processed_content);
+                    }
+                }
+            } catch (Exception $e) {
+                // Log error but continue processing other images
+                error_log('SIMCO: Failed to process image ' . $img_src . ': ' . $e->getMessage());
+            }
+        }
+        
+        return $processed_content;
+    }
+
+    /**
+     * Get HTML description for a taxonomy term
+     * 
+     * @param int $term_id The term ID
+     * @return string The HTML content or empty string if not found
+     */
+    public static function get_term_html_description($term_id)
+    {
+        if (empty($term_id)) {
+            return '';
+        }
+        
+        $html_description = get_term_meta($term_id, 'description_with_html', true);
+        return !empty($html_description) ? $html_description : '';
+    }
+
+    /**
+     * Get HTML description for a taxonomy term by slug
+     * 
+     * @param string $term_slug The term slug
+     * @param string $taxonomy The taxonomy name
+     * @return string The HTML content or empty string if not found
+     */
+    public static function get_term_html_description_by_slug($term_slug, $taxonomy)
+    {
+        if (empty($term_slug) || empty($taxonomy)) {
+            return '';
+        }
+        
+        $term = get_term_by('slug', $term_slug, $taxonomy);
+        if ($term && !is_wp_error($term)) {
+            return self::get_term_html_description($term->term_id);
+        }
+        
+        return '';
+    }
+
+    /**
+     * Add HTML content field to taxonomy edit forms
+     */
+    public function simco_show_taxonomy_html_field($term)
+    {
+        // Security check
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        $term_id = $term->term_id;
+        $html_content = get_term_meta($term_id, 'description_with_html', true);
+        
+        if (!empty($html_content)) {
+            ?>
+            <tr class="form-field">
+                <th scope="row">
+                    <label for="simco_html_description"><?php _e('HTML Description (Read-Only)', 'simple-content-scraper'); ?></label>
+                </th>
+                <td>
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+                        <p><strong>Raw HTML:</strong></p>
+                        <textarea readonly style="width: 100%; height: 200px; font-family: monospace; font-size: 12px;"><?php echo esc_textarea($html_content); ?></textarea>
+                        
+                        <p><strong>Rendered Preview:</strong></p>
+                        <div style="border: 1px solid #ccc; padding: 10px; background: white; max-height: 300px; overflow-y: auto;">
+                            <?php echo wp_kses_post($html_content); ?>
+                        </div>
+                    </div>
+                    <p class="description">
+                        <?php _e('This field contains the original HTML content scraped from the source, including processed images. This field is automatically managed by the Simple Content Scraper plugin and cannot be edited manually.', 'simple-content-scraper'); ?>
+                    </p>
+                </td>
+            </tr>
+            <?php
+        }
+    }
+
+    /**
+     * Save taxonomy HTML field (placeholder - content is managed automatically)
+     */
+    public function simco_add_taxonomy_html_field($term_id, $taxonomy)
+    {
+        // This is just a placeholder - the HTML content is managed automatically by the scraper
+        // No manual saving is allowed for security reasons
     }
 }

@@ -106,6 +106,12 @@ class Simple_Content_Scraper
 
         // Register admin AJAX actions
         $this->loader->add_action('wp_ajax_simco_process_urls', $plugin_admin_ajax, 'simco_process_urls');
+        
+        // Add taxonomy meta fields display (for all taxonomies)
+        $this->loader->add_action('edit_term', $plugin_data_scraper, 'simco_add_taxonomy_html_field', 10, 2);
+        $this->loader->add_action('product_cat_edit_form_fields', $plugin_data_scraper, 'simco_show_taxonomy_html_field', 10, 1);
+        $this->loader->add_action('category_edit_form_fields', $plugin_data_scraper, 'simco_show_taxonomy_html_field', 10, 1);
+        $this->loader->add_action('post_tag_edit_form_fields', $plugin_data_scraper, 'simco_show_taxonomy_html_field', 10, 1);
     }
 
     /**

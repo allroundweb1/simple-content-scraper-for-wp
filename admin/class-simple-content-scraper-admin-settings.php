@@ -137,6 +137,10 @@ class Simple_Content_Scraper_Admin_Settings
 
     public function simple_content_scraper_plugin_main_page()
     {
+        // Security check: Only administrators can access this page
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Access denied. Only administrators can access this page.', 'simple-content-scraper'));
+        }
 ?>
         <div class="main-settings-wrap">
             <div class="uk-section uk-section-muted ">

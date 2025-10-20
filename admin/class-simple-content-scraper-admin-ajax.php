@@ -15,9 +15,19 @@ class Simple_Content_Scraper_Admin_Ajax
      */
     public function simco_process_urls()
     {
+        // Security check: Only administrators can execute this function
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Access denied. Only administrators can execute this function.');
+        }
+
         // Check nonce  wp_create_nonce('simco_settings_nonce')
         if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'simco_settings_nonce')) {
             wp_send_json_error('Invalid nonce');
+        }
+
+        // Validate that this is an AJAX request from admin area
+        if (!is_admin() || !wp_doing_ajax()) {
+            wp_send_json_error('Invalid request context');
         }
 
         // Check if we got any $_POST['urls']
