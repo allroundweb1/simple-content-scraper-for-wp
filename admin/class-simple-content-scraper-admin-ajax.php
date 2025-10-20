@@ -95,11 +95,6 @@ class Simple_Content_Scraper_Admin_Ajax
                 $queued_tasks++;
             }
         }
-        
-        // Add debugging info
-        error_log('SIMCO DEBUG: Total URLs: ' . count($urls_array));
-        error_log('SIMCO DEBUG: Batches created: ' . $total_batches);
-        error_log('SIMCO DEBUG: Tasks queued successfully: ' . $queued_tasks);
 
         // Return success message
         if ($queued_tasks > 0) {
